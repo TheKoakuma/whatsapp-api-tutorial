@@ -1,4 +1,4 @@
-const { Client, MessageMedia } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const socketIO = require('socket.io');
@@ -24,11 +24,6 @@ app.use(fileUpload({
   debug: true
 }));
 
-const SESSION_FILE_PATH = './whatsapp-session.json';
-let sessionCfg;
-if (fs.existsSync(SESSION_FILE_PATH)) {
-  sessionCfg = require(SESSION_FILE_PATH);
-}
 
 app.get('/', (req, res) => {
   res.sendFile('index.html', {
@@ -37,7 +32,7 @@ app.get('/', (req, res) => {
 });
 
 const client = new Client({
-  restartOnAuthFail: true,
+  authStrategy: new LocalAuth(),	
   puppeteer: {
     headless: true,
     args: [
@@ -51,7 +46,6 @@ const client = new Client({
       '--disable-gpu'
     ],
   },
-  session: sessionCfg
 });
 
 client.on('message', msg => {
@@ -62,7 +56,6 @@ client.on('message', msg => {
   } else if (msg.body == '!groups') {
     client.getChats().then(chats => {
       const groups = chats.filter(chat => chat.isGroup);
-
       if (groups.length == 0) {
         msg.reply('You have no group yet.');
       } else {
@@ -138,11 +131,6 @@ io.on('connection', function(socket) {
     socket.emit('message', 'Whatsapp is authenticated!');
     console.log('AUTHENTICATED', session);
     sessionCfg = session;
-    fs.writeFile(SESSION_FILE_PATH, JSON.stringify(session), function(err) {
-      if (err) {
-        console.error(err);
-      }
-    });
   });
 
   client.on('auth_failure', function(session) {
