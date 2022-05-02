@@ -9,6 +9,7 @@ const { phoneNumberFormatter } = require('./helpers/formatter');
 const fileUpload = require('express-fileupload');
 const axios = require('axios');
 const mime = require('mime-types');
+const { query } = require('express');
 
 const port = process.env.PORT || 8000;
 
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use(express.urlencoded({
   extended: true
 }));
+
 app.use(fileUpload({
   debug: true
 }));
@@ -29,6 +31,8 @@ app.get('/', (req, res) => {
     root: __dirname
   });
 });
+
+badTags=['1girl','badtag2'];
 
 const client = new Client({
   restartOnAuthFail: true,
@@ -53,10 +57,34 @@ client.on('message', msg => {
     msg.reply('pong');
   } else if (msg.body == 'good morning') {
     msg.reply('selamat pagi');
-  } else if (msg.body == '!groups') {
+  } else if(msg.body.startsWith('!waifu')){
+    waifu=msg.body.replace('!waifu ','');
+    waifu=waifu.replaceAll(' ','_')
+    axios.get('https://safebooru.donmai.us/posts.json?tags='+waifu+'&random=yes')
+         .then(async res=>{console.log(`statusCode: ${res.status}`)
+            const waifu=res.data[0].file_url
+            const tags=res.data[0].tag_string.split(' ')
+            const pic=await MessageMedia.fromUrl(waifu);
+            
+            console.log(waifu);
+            console.log(tags);
+
+            tags.forEach(element => {
+              if(badTags.includes(element)){ badtag=true }else{ badtag=false}
+            });
+
+            if (badtag=true){
+              msg.reply(`Bad Ruukoto, Can't do this Lewd`)
+            }else {
+              msg.reply(pic)
+            }
+           //chat.sendMessage(pic)
+               
+        }).catch(error=>{console.error(error)
+    ;})
+  }  else if (msg.body == '!groups') {
     client.getChats().then(chats => {
       const groups = chats.filter(chat => chat.isGroup);
-
       if (groups.length == 0) {
         msg.reply('You have no group yet.');
       } else {
