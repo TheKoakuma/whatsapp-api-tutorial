@@ -73,7 +73,7 @@ client.on('message', msg => {
               if(badTags.includes(element)){ badtag=true }else{ badtag=false}
             });
 
-            if (badtag=true){
+            if (badtag==true){
               msg.reply(`Bad Ruukoto, Can't do this Lewd`)
             }else {
               msg.reply(pic)
