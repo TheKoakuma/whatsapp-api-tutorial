@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { Client, MessageMedia, LocalAuth } = require('whatsapp-web.js');
 const express = require('express');
 const { body, validationResult } = require('express-validator');
@@ -52,36 +53,50 @@ const client = new Client({
   authStrategy: new LocalAuth()
 });
 
+doggos=process.env.HORNY;
+doggos=doggos.split(",");
+
+console.log(doggos);
+
+
 client.on('message', msg => {
+  whowas=msg.from.split('@')[0];
+  console.log('message from '+whowas);
+
   if (msg.body == '!ping') {
     msg.reply('pong');
   } else if (msg.body == 'good morning') {
     msg.reply('selamat pagi');
   } else if(msg.body.startsWith('!waifu')){
-    waifu=msg.body.replace('!waifu ','');
-    waifu=waifu.replaceAll(' ','_')
-    axios.get('https://safebooru.donmai.us/posts.json?tags='+waifu+'&random=yes')
-         .then(async res=>{console.log(`statusCode: ${res.status}`)
-            const waifu=res.data[0].file_url
-            const tags=res.data[0].tag_string.split(' ')
-            const pic=await MessageMedia.fromUrl(waifu);
-            
-            console.log(waifu);
-            console.log(tags);
 
-            tags.forEach(element => {
-              if(badTags.includes(element)){ badtag=true }else{ badtag=false}
-            });
-
-            if (badtag==true){
-              msg.reply(`Bad Ruukoto, Can't do this Lewd`)
-            }else {
-              msg.reply(pic)
-            }
-           //chat.sendMessage(pic)
-               
-        }).catch(error=>{console.error(error)
-    ;})
+    if(doggos.includes(whowas)){
+      msg.reply("Ruukoto don't reply bad doggos!")
+    } else {
+      waifu=msg.body.replace('!waifu ','');
+      waifu=waifu.replaceAll(' ','_')
+      axios.get('https://safebooru.donmai.us/posts.json?tags='+waifu+'&random=yes')
+           .then(async res=>{console.log(`statusCode: ${res.status}`)
+              const waifu=res.data[0].file_url
+              const tags=res.data[0].tag_string.split(' ')
+              const pic=await MessageMedia.fromUrl(waifu);
+              
+              console.log(waifu);
+              console.log(tags);
+  
+              tags.forEach(element => {
+                if(badTags.includes(element)){ badtag=true }else{ badtag=false}
+              });
+  
+              if (badtag==true){
+                msg.reply(`Bad Ruukoto, Can't do this Lewd`)
+              }else {
+                msg.reply(pic)
+              }
+             //chat.sendMessage(pic)
+                 
+          }).catch(error=>{console.error(error)
+      ;})
+    }
   }  else if (msg.body == '!groups') {
     client.getChats().then(chats => {
       const groups = chats.filter(chat => chat.isGroup);
